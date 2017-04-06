@@ -516,3 +516,219 @@ FROM girls
   LEFT JOIN parents ON (girls.name = parents.child AND ptype = 'MOTHER')
   LEFT JOIN boys ON (boys.city = girls.city)
   LEFT JOIN parents AS dad ON (boys.name = dad.child AND dad.ptype = 'FATHER');
+  
+  /*
+  Column functions offer different kinds of summary data:
+      • SUM()computes the total of a column.
+      • AVG()computes the average value in a column.
+      • MIN()finds the smallest value in a column.
+      • MAX()finds the largest value in a column.
+      • COUNT()counts the number of values in a column. (NULL values are not counted.)
+      • COUNT(*)counts rows of query results. (This is actually an alternate form of the
+      COUNT() function.)
+   */
+-- What is the total quota for all salespeople? --
+SELECT SUM(quota)
+FROM selesreps;
+
+-- What are the smallest and largest assigned quotas? --
+SELECT MIN(quota), MAX(quota)
+FROM selesreps;
+
+-- How many salespeople have exceeded their quota? --
+SELECT COUNT(*)
+FROM selesreps
+WHERE sales > quota;
+
+-- What is the size of the average order? --
+SELECT AVG(amount)
+FROM orders;
+
+SELECT cust, AVG(amount)
+FROM orders
+GROUP BY cust;
+
+-- What is the size of the average order for each sales office? --
+SELECT city, AVG(amount)
+FROM orders
+  JOIN selesreps ON (orders.rep = selesreps.empl_num)
+  JOIN offices ON (selesreps.rep_office = offices.office)
+GROUP BY city;
+
+-- How many salespeople are assigned to each sales office? --
+SELECT city, COUNT(*)
+FROM selesreps LEFT JOIN offices ON (selesreps.rep_office = offices.office)
+GROUP BY rep_office;
+
+SELECT rep_office, COUNT(*)
+FROM selesreps
+GROUP BY rep_office;
+
+-- What are the average quota and average sales of our salespeople? --
+SELECT TRUNCATE(AVG(quota), 2), TRUNCATE(AVG(sales), 2)
+FROM selesreps;
+
+-- What is the average sales performance across all of our salespeople? --
+SELECT AVG(100 * sales / quota)
+FROM selesreps;
+
+-- What are the total quotas and sales for all salespeople? --
+SELECT SUM(sales), SUM(quota)
+FROM selesreps;
+
+-- What is the total of the orders taken by Bill Adams? --
+SELECT name, SUM(amount)
+FROM selesreps JOIN orders ON (selesreps.empl_num = orders.rep)
+WHERE name = 'Bill Adams';
+
+-- Calculate the average price of products from manufacturer ACI. --
+SELECT mfr_id, AVG(price)
+FROM products
+WHERE mfr_id = 'ACI';
+
+-- Calculate the average size of an order placed by Acme Mfg. (customer number 2103). --
+SELECT company, AVG(amount)
+FROM orders JOIN customers ON (orders.cust = customers.cust_num)
+WHERE company LIKE 'Acme%';
+
+-- What is the earliest order date in the database? --
+SELECT order_num
+FROM orders
+WHERE order_date = (SELECT MIN(order_date) FROM orders);
+
+SELECT MIN(order_date)
+FROM orders;
+
+-- What is the best sales performance of any salesperson? --
+SELECT MAX(sales * 100 / quota)
+FROM selesreps;
+
+SELECT name
+FROM selesreps
+WHERE (sales * 100 / quota) =
+                            (SELECT MAX(sales * 100 / quota)
+                            FROM selesreps);
+
+-- How many customers are there? --
+SELECT COUNT(cust_num)
+FROM customers;
+
+SELECT COUNT(*)
+FROM customers;
+
+  /*
+      COUNT() function that includes a column name does not count NULL
+      values in that column, but COUNT(*) counts all rows regardless of column values.
+   */
+
+-- How many salespeople are over quota? --
+SELECT COUNT(empl_num)
+FROM selesreps
+WHERE sales > quota;
+
+-- How many orders for more than $25,000 are on the books? --
+SELECT COUNT(order_num)
+FROM orders
+WHERE amount > 25000;
+
+/*
+      The ANSI/ISO SQL standard specifies these precise rules for handling NULL values in
+      column functions:
+      • If any of the data values in a column are NULL, they are ignored for the purpose of
+      computing the column function’s value.
+      • If every data item in the column is NULL, then the SUM(), AVG(), MIN(), and MAX()
+      column functions return a NULL value; the COUNT() function returns a value of zero.
+      • If no data items are in the column (that is, the column is empty), then the SUM(),
+      AVG(), MIN(), and MAX() column functions return a NULL value; the COUNT()
+      function returns a value of zero.
+      • The COUNT(*) counts rows and does not depend on the presence or absence of
+      NULL values in a column. If there are no rows, it returns a value of zero.
+ */
+
+-- How many different titles are held by salespeople? --
+SELECT COUNT(DISTINCT title)
+FROM selesreps;
+
+-- How many sales offices have salespeople who are over quota? --
+SELECT COUNT(DISTINCT rep_office)
+FROM selesreps
+WHERE sales > quota;
+
+-- What is the average order size? --
+SELECT AVG(amount)
+FROM orders;
+
+-- What is the average order size for each salesperson? --
+SELECT name, AVG(amount)
+FROM orders JOIN selesreps ON (orders.rep = selesreps.empl_num)
+GROUP BY name;
+
+-- What is the range of assigned quotas in each office? --
+SELECT city, MIN(quota), MAX(quota)
+FROM selesreps LEFT JOIN offices ON (selesreps.rep_office = offices.office)
+GROUP BY city;
+
+-- How many salespeople are assigned to each office? --
+SELECT city, COUNT(empl_num)
+FROM selesreps LEFT JOIN offices ON (selesreps.rep_office = offices.office)
+GROUP BY city;
+
+-- How many different customers are served by each salesperson? --
+SELECT name, COUNT(DISTINCT cust_num)
+FROM selesreps JOIN customers ON selesreps.empl_num = customers.cust_rep
+GROUP BY name;
+
+-- Calculate the total orders for each customer of each salesperson. --
+SELECT company, name, SUM(amount)
+FROM customers
+  JOIN selesreps ON (customers.cust_rep = selesreps.empl_num)
+  JOIN orders ON (customers.cust_num = orders.cust)
+GROUP BY company, empl_num;
+
+SELECT name, company, SUM(amount)
+FROM customers
+  JOIN selesreps ON (customers.cust_rep = selesreps.empl_num)
+  JOIN orders ON (customers.cust_num = orders.cust)
+GROUP BY name, company WITH ROLLUP  ;
+
+  /*
+     There are also restrictions on the items that can appear in the select list of a grouped
+     query. All of the items in the select list must have a single value for each group of rows.
+     Basically, this means that a select item in a grouped query can be:
+     • A column (provided it is one of the grouping columns);
+     • A constant;
+     • A column function, which produces a single value summarizing the rows in the group;
+     • A grouping column, which by definition has the same value in every row of the group;
+     • An expression involving combinations of these.
+  */
+
+-- Calculate the total orders for each salesperson.--
+SELECT name, SUM(amount)
+FROM selesreps LEFT JOIN orders ON (selesreps.empl_num = orders.rep)
+GROUP BY empl_num;
+
+-- What is the average order size for each salesperson whose orders total more than $30,000? --
+SELECT name, AVG(amount)
+FROM selesreps JOIN orders ON (selesreps.empl_num = orders.rep)
+GROUP BY empl_num
+HAVING SUM(amount) > 30000;
+
+/*
+For each office with two or more people, compute the total quota and total sales for all salespeople who
+work in the office.
+ */
+SELECT city, SUM(selesreps.quota), SUM(selesreps.sales)
+FROM selesreps JOIN offices ON (selesreps.rep_office = offices.office)
+GROUP BY city
+HAVING COUNT(empl_num) >= 2;
+
+  /*
+     The HAVING clause is used to include or exclude row groups from the query results, so the
+     search condition it specifies must be one that applies to the group as a whole rather than to
+     individual rows. This means that an item appearing within the search condition in a
+     HAVING clause can be:
+     • A constant
+     • A column function, which produces a single value summarizing the rows in the group
+     • A grouping column, which by definition has the same value in every row of the group
+     • An expression involving combinations of these
+   */
