@@ -95,12 +95,12 @@ FROM selesreps
 WHERE manager = 104;
 
     /*
-Five basic search conditions (called predicates in the ANSI/ISO standard):
-- Comparison test.
-- Range test.
-- Set membership test.
-- Pattern matching test.
-- Null value test.
+    Five basic search conditions (called predicates in the ANSI/ISO standard):
+      - Comparison test.
+      - Range test.
+      - Set membership test.
+      - Pattern matching test.
+      - Null value test.
     */
     
 -- The Comparison Test (=, <>, <, <=, >, >=) --
@@ -159,7 +159,7 @@ FROM selesreps
 WHERE sales NOT BETWEEN (.8 * quota) AND (1.2 * quota);
 
   /*
-      The ANSI/ISO standard defines relatively complex rules for the handling of NULL values in the BETWEEN test:
+  The ANSI/ISO standard defines relatively complex rules for the handling of NULL values in the BETWEEN test:
       - If the test expression produces a NULL value, or if both expressions defining the range produce NULL values,
       then the BETWEEN test returns a NULL result.
       - If the expression defining the lower end of the range produces a NULL value,
@@ -196,7 +196,7 @@ FROM customers
 WHERE company = 'Smithson Corp.';
 
   /*
-      Wildcard Characters.
+  Wildcard Characters.
       - The percent sign (%) wildcard character matches any sequence of zero or more characters.
       - The underscore (_) wildcard character matches any single character.
       - The ANSI/ISO SQL standard does specify a way to literally match wildcard characters,
@@ -254,7 +254,7 @@ FROM offices
 ORDER BY 3 DESC;
 
   /*
-      To generate the query results for a single-table SELECT statement, follow these steps:
+  To generate the query results for a single-table SELECT statement, follow these steps:
       1. Start with the table named in the FROM clause.
       2. If there is a WHERE clause, apply its search condition to each row of the table,
       retaining those rows for which the search condition is TRUE, and discarding those
@@ -284,4 +284,138 @@ WHERE amount > 30000.00;
       data type of the corresponding column selected from the second table.
       - Neither of the two tables can be sorted with the ORDER BY clause. However, the 
       combined query results can be sorted, as described in the following section.
+   */
+
+/* List all orders showing order number, amount, customer name (“company”), and the customer’s
+credit limit. */
+SELECT order_num, amount, company, credit_limit
+FROM orders JOIN customers ON (orders.cust = customers.cust_num);
+
+-- List each salesperson and the city and region where they work. --
+SELECT name, city, region
+FROM selesreps JOIN offices ON (selesreps.rep_office = offices.office);
+
+-- List the offices and the names and titles of their managers. --
+SELECT city, name, title
+FROM offices JOIN selesreps ON (offices.mgr = selesreps.empl_num);
+
+-- List the offices with a target over $600,000 and their manager information. --
+SELECT office, name, title
+FROM offices JOIN selesreps ON (offices.mgr = selesreps.empl_num)
+WHERE target > 600000;
+
+-- List all the orders, showing amounts and product descriptions. --
+SELECT order_date, amount, description
+FROM orders JOIN products ON (orders.mfr = products.mfr_id AND orders.product = products.prod_id);
+
+-- List orders over $25,000, including the name of the salesperson who took the order and the name of the customer. --
+SELECT order_date, amount, company AS 'who placed', name AS 'who took'
+FROM orders
+  JOIN customers ON (orders.cust = customers.cust_num)
+  JOIN selesreps ON (customers.cust_rep = selesreps.empl_num)
+WHERE amount > 25000;
+
+/* List the orders over $25,000, showing the name of the customer who placed the order, the customer’s
+salesperson, and the office where the salesperson works. */
+SELECT order_date, company AS customer, name AS 'customer’s salesperson', city AS 'salesperson lives in'
+FROM orders
+  JOIN customers ON (orders.cust = customers.cust_num)
+  JOIN selesreps ON (customers.cust_rep = selesreps.empl_num)
+  JOIN offices ON (selesreps.rep_office = offices.office)
+WHERE amount > 25000;
+
+  /*
+      - Qualified column names are sometimes needed in multitable queries to eliminate
+      ambiguous column references.
+      - All-column selections (SELECT *) have a special meaning for multitable queries.
+      - Self-joins can be used to create a multitable query that relates a table to itself.
+      - Table aliases can be used in the FROM clause to simplify qualified column names and
+      to allow unambiguous column references in self-joins.
+   */
+
+-- Show the name, sales, and office for each salesperson. --
+SELECT name, selesreps.sales AS 'empl. sales', city, offices.sales AS 'office sales'
+FROM selesreps JOIN offices ON (selesreps.rep_office = offices.office);
+
+-- List the names of salespeople and their managers. --
+SELECT selesreps.name AS 'empl. name', boss.name AS 'boss name'
+FROM selesreps JOIN selesreps AS boss
+    ON (selesreps.manager = boss.empl_num);
+
+-- List salespeople with a higher quota than their manager. --
+SELECT selesreps.name AS employee, selesreps.quota 'empl. quota', boss.name AS 'boss', boss.quota AS 'boss quota'
+FROM selesreps JOIN selesreps AS boss
+  ON (selesreps.manager = boss.empl_num)
+WHERE selesreps.quota > boss.quota;
+
+/* List salespeople who work in different offices than their manager, showing the name and office where
+each works. */
+SELECT
+  selesreps.name AS 'empl name',
+  offices.city AS 'empl city',
+  bname.name AS 'boss name',
+  bcity.city AS 'boss city'
+FROM selesreps
+  JOIN offices ON (selesreps.rep_office = offices.office)
+  JOIN selesreps AS bname ON (selesreps.manager = bname.empl_num)
+  JOIN offices AS bcity ON (bname.rep_office = bcity.office)
+WHERE offices.city <> bcity.city;
+
+-- Show all possible combinations of salespeople and cities. --
+SELECT name, city
+FROM selesreps JOIN offices;
+
+-- List the company name and all orders for customer number 2103. --
+SELECT company, order_date, amount
+FROM customers JOIN orders ON (customers.cust_num = orders.cust)
+WHERE cust_num = 2103;
+
+  /*
+  To generate the query results for a SELECT statement:
+      1. If the statement is a UNION of SELECT statements, apply Steps 2 through 5 to each
+      of the statements to generate their individual query results.
+      2. Form the product of the tables named in the FROM clause. If the FROM clause names
+      a single table, the product is that table.
+      3. If there is an ON clause, apply its matching-column condition to each row of the
+      product table, retaining those rows for which the condition is TRUE (and discarding
+      those for which it is FALSE or NULL).
+      4. If there is a WHERE clause, apply its search condition to each row of the resulting
+      table, retaining those rows for which the search condition is TRUE (and discarding
+      those for which it is FALSE or NULL).
+      5. For each remaining row, calculate the value of each item in the select list to produce
+      a single row of query results. For each column reference, use the value of the
+      column in the current row.
+      6. If SELECT DISTINCT is specified, eliminate any duplicate rows of query results
+      that were produced.
+      7. If the statement is a UNION of SELECT statements, merge the query results for the
+      individual statements into a single table of query results. Eliminate duplicate rows
+      unless UNION ALL is specified.
+      8. If there is an ORDER BY clause, sort the query results as specified.
+   */
+
+-- List the salespeople and the offices where they work. --
+SELECT name, rep_office
+FROM selesreps;
+
+SELECT COUNT(*)
+FROM selesreps;
+
+-- List the salespeople and the cities where they work. --
+SELECT name, city
+FROM selesreps JOIN offices ON (selesreps.rep_office = offices.office);
+
+SELECT COUNT(*)
+FROM selesreps JOIN offices ON (selesreps.rep_office = offices.office);
+
+  /*
+  Full outer join
+      1. Begin with the inner join of the two tables, using matching columns in the normal
+      way.
+      2. For each row of the first table that is not matched by any row in the second table,
+      add one row to the query results, using the values of the columns in the first table,
+      and assuming a NULL value for all columns of the second table.
+      3. For each row of the second table that is not matched by any row in the first table,
+      add one row to the query results, using the values of the columns in the second
+      table, and assuming a NULL value for all columns of the first table.
+      4. The resulting table is the outer join of the two tables.
    */
