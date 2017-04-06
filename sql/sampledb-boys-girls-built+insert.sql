@@ -29,22 +29,23 @@ COMMIT;
 CREATE TABLE parents
 (
     child VARCHAR(25),
-    type CHAR(6),
+    ptype CHAR(6),
     pname VARCHAR(25)
 );
 ALTER Table parents COMMENT = 'The parents table lists fourteen mother''s or father''s names of particular child;';
-INSERT INTO parents (child, type, pname) VALUES
-('Mary', 'FATHER', 'Francis'),
-('Mary','MOTHER', 'Joyce'),
-('Nancy', 'FATHER', 'Robert'),
-('Nancy','MOTHER', 'Norma'),
-('Betty', 'FATHER', 'Cliff'),
-('Betty','MOTHER', 'Besita'),
-('Anne', 'FATHER', 'Walter'),
-('Anne','MOTHER', 'Sophie'),
-('John', 'FATHER', 'Carlos'),
-('John','MOTHER', 'Marlena'),
-('Sam', 'FATHER', 'Joseph'),
-('Sam','MOTHER', 'Connie'),
-('James', 'FATHER', 'James'),
-('James','MOTHER', 'Mary');
+INSERT INTO parents (child, ptype, pname) VALUES
+    ('Mary', 'FATHER', 'Francis'),
+    ('Mary','MOTHER', 'Joyce'),
+    ('Nancy', 'FATHER', 'Robert'),
+    ('Nancy','MOTHER', 'Norma'),
+    ('Betty', 'FATHER', 'Cliff'),
+    ('Betty','MOTHER', 'Besita'),
+    ('Anne', 'FATHER', 'Walter'),
+    ('Anne','MOTHER', 'Sophie'),
+    ('John', 'FATHER', 'Carlos'),
+    ('John','MOTHER', 'Marlena'),
+    ('Sam', 'FATHER', 'Joseph'),
+    ('Sam','MOTHER', 'Connie'),
+    ('James', 'FATHER', 'James'),
+    ('James','MOTHER', 'Mary');
+COMMIT;

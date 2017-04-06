@@ -419,3 +419,100 @@ FROM selesreps JOIN offices ON (selesreps.rep_office = offices.office);
       table, and assuming a NULL value for all columns of the first table.
       4. The resulting table is the outer join of the two tables.
    */
+
+-- List the girls and boys who live in the same city. --
+SELECT girls.name AS g_name, girls.city AS g_city, boys.name AS b_name, boys.city AS b_city
+FROM girls INNER JOIN boys ON (girls.city = boys.city);
+
+-- List girls and boys in the same city, including any unmatched girls. --
+SELECT *
+FROM girls LEFT JOIN boys ON (girls.city = boys.city);
+
+-- List girls and boys in the same city, including any unmatched boys. --
+SELECT *
+FROM girls RIGHT JOIN boys ON (girls.city = boys.city);
+
+-- List the salespeople and the cities where they work. --
+SELECT name, city
+FROM selesreps LEFT JOIN offices ON (selesreps.rep_office = offices.office);
+
+  /*
+      - The cross join will contain m×n rows, consisting of all possible row pairs from the
+      two tables.
+      - TBL1 INNER JOIN TBL2 will contain some number of rows, r, which is less than
+      m×n. The inner join is strictly a subset of the cross join. It is formed by eliminating
+      those rows from the cross join that do not satisfy the matching condition for the
+      inner join.
+      - The left outer join contains all of the rows from the inner join, plus each unmatched
+      row from TBL1, NULL-extended.
+      - The right outer join also contains all of the rows from the inner join, plus each
+      unmatched row from TBL2, NULL-extended.
+      - The full outer join contains all of the rows from the inner join, plus each unmatched
+      row from TBL1, NULL-extended, plus each unmatched row from TBL2, NULLextended.
+      Roughly speaking, its query results are equal to the left outer join “plus”
+      the right outer join.
+      -The union join contains all of the rows of TBL1, NULL-extended, plus all of the rows
+      of TBL2, NULL-extended. Roughly speaking, its query results are the full outer join
+      “minus” the inner join.
+   */
+-- Make a list of all of the girls, along with the names of their mothers and the names of the boys who live in the same city. --
+SELECT
+  girls.name g_name,
+  girls.city g_city,
+  parents.pname g_mother,
+  boys.name b_name,
+  boys.city b_city
+FROM girls
+  JOIN parents ON (girls.name = parents.child AND parents.ptype = 'MOTHER')
+  JOIN boys ON (girls.city = boys.city);
+
+SELECT
+  girls.name g_name,
+  girls.city g_city,
+  parents.pname g_mother,
+  boys.name b_name,
+  boys.city b_city
+FROM girls
+  LEFT OUTER JOIN parents ON (girls.name = parents.child AND parents.ptype = 'MOTHER')
+  LEFT OUTER JOIN boys ON (girls.city = boys.city);
+
+SELECT
+  girls.name g_name,
+  girls.city g_city,
+  parents.pname g_mother,
+  boys.name b_name,
+  boys.city b_city
+FROM
+  (
+      (girls LEFT JOIN parents ON (girls.name = parents.child)
+  )
+      LEFT JOIN boys ON (girls.city = boys.city))
+WHERE (ptype = 'MOTHER') OR (ptype IS NULL );
+
+/*
+Generate a girl/boy listing again, but this time you want to include the name of the boy’s father
+and the girl’s mother in the query results.
+ */
+SELECT
+  girls.name g_name,
+  girls.city g_city,
+  parents.pname g_mother,
+  boys.name b_name,
+  boys.city b_city,
+  dad.pname AS f_name
+FROM girls
+  JOIN parents ON (girls.name = parents.child AND ptype = 'MOTHER')
+  JOIN boys ON (boys.city = girls.city)
+  JOIN parents AS dad ON (boys.name = dad.child AND dad.ptype = 'FATHER');
+
+SELECT
+  girls.name g_name,
+  girls.city g_city,
+  parents.pname g_mother,
+  boys.name b_name,
+  boys.city b_city,
+  dad.pname AS f_name
+FROM girls
+  LEFT JOIN parents ON (girls.name = parents.child AND ptype = 'MOTHER')
+  LEFT JOIN boys ON (boys.city = girls.city)
+  LEFT JOIN parents AS dad ON (boys.name = dad.child AND dad.ptype = 'FATHER');
