@@ -3,7 +3,7 @@ CREATE TABLE girls
     name VARCHAR(25),
     city VARCHAR(25)
 );
-ALTER TABLE sample_databases.girls COMMENT = 'The girls table lists five girls and the cities where they live;';
+ALTER TABLE girls COMMENT = 'The girls table lists five girls and the cities where they live;';
 INSERT INTO girls (name, city) VALUES 
     ('Mary','Boston'),
     ('Nancy',null),
